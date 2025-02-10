@@ -3,7 +3,7 @@
 title: 'Lesson 10: Configuration, Resource Usage and SchedulerFactory'
 ---
 
-Quartz is architected in modular way, and therefore to get it running, several components need to be "snapped" together.
+Quartz is designed in modular way, and therefore to get it running, several components need to be "snapped" together.
 Fortunately, some helpers exist for making this happen.
 
 The major components that need to be configured before Quartz can do its work are:
@@ -33,7 +33,7 @@ Quartz ships with a simple (but very satisfactory) thread pool named Quartz.Simp
 This IThreadPool implementation simply maintains a fixed set of threads in its pool - never grows, never shrinks.
 But it is otherwise quite robust and is very well tested - as nearly everyone using Quartz uses this pool.
 
-JobStores and DataSrouces were discussed in Lesson 9 of this tutorial. Worth noting here, is the fact that all JobStores
+JobStores and DataSources were discussed in Lesson 9 of this tutorial. Worth noting here, is the fact that all JobStores
 implement the IJobStore interface - and that if one of the bundled JobStores does not fit your needs, then you can make your own.
 
 Finally, you need to create your Scheduler instance. The Scheduler itself needs to be given a name and handed
@@ -53,14 +53,14 @@ You can find complete documentation in the "Configuration" manual under the "Ref
 ## DirectSchedulerFactory
 
 DirectSchedulerFactory is another SchedulerFactory implementation. It is useful to those wishing to create their Scheduler
-instance in a more programatic way. Its use is generally discouraged for the following reasons: (1) it
-requires the user to have a greater understanding of what they're doing, and (2) it does not allow for declaritive
+instance in a more programmatic way. Its use is generally discouraged for the following reasons: (1) it
+requires the user to have a greater understanding of what they're doing, and (2) it does not allow for declarative
 configuration - or in other words, you end up hard-coding all of the scheduler's settings.
 
 ## Logging
 
-Quartz.NET uses the <a href="http://netcommon.sourceforge.net/">Common.Logging framework</a> for all of its logging needs.
+Quartz.NET uses the [Common.Logging framework](http://netcommon.sourceforge.net/) for all of its logging needs.
 Quartz does not produce much logging information - generally just some information during initialization, and
 then only messages about serious problems while Jobs are executing. In order to "tune" the logging settings
 (such as the amount of output, and where the output goes), you need to understand the Commmon.Logging framework,
-which is beyond the scope of this document, please refer to <a href="http://netcommon.sourceforge.net/documentation.html">Common.Logging Documentation</a>.
+which is beyond the scope of this document, please refer to [Common.Logging Documentation](http://netcommon.sourceforge.net/documentation.html).

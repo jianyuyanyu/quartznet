@@ -1,6 +1,8 @@
+// ReSharper disable SuspiciousTypeConversion.Global
+
 using System.Runtime.Serialization.Formatters;
 using System.Runtime.Serialization.Formatters.Binary;
-using NUnit.Framework;
+
 using Quartz.Impl.Matchers;
 
 namespace Quartz.Tests.Unit.Impl.Matchers;
@@ -13,7 +15,7 @@ public class StringOperatorTest
     {
         var op = Deserialize<StringOperator>("StringOperator_Anything");
 
-        Assert.IsNotNull(op);
+        Assert.That(op, Is.Not.Null);
         Anything_Evaluate(op);
     }
 
@@ -27,7 +29,9 @@ public class StringOperatorTest
     [Test]
     public void Anything_ShouldBeSingleton()
     {
-        Assert.AreSame(StringOperator.Anything, StringOperator.Anything);
+#pragma warning disable NUnit2009
+        Assert.That(StringOperator.Anything, Is.SameAs(StringOperator.Anything));
+#pragma warning restore NUnit2009
     }
 
     [Test]
@@ -38,17 +42,20 @@ public class StringOperatorTest
 
     private static void Anything_Evaluate(StringOperator op)
     {
-        Assert.IsTrue(op.Evaluate(null, null));
-        Assert.IsTrue(op.Evaluate(null, "Quartz"));
-        Assert.IsTrue(op.Evaluate("Quartz", null));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsTrue(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsTrue(op.Evaluate("Quartz", "tz"));
-        Assert.IsTrue(op.Evaluate("Quartz", "tZ"));
-        Assert.IsTrue(op.Evaluate("Quartz", "ua"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Qu"));
-        Assert.IsTrue(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.True);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.True);
+            Assert.That(op.Evaluate("Quartz", null), Is.True);
+            Assert.That(op.Evaluate("Quartz", "Quartz"), Is.True);
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.True);
+        });
     }
 
     [Test]
@@ -56,11 +63,14 @@ public class StringOperatorTest
     {
         var op = StringOperator.Anything;
 
-        Assert.IsTrue(op.Equals((object) op));
-        Assert.IsTrue(op.Equals((object) SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals((object) StringOperator.Equality));
-        Assert.IsFalse(op.Equals((object) null));
-        Assert.IsFalse(op.Equals("xxx"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals((object)op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Equality));
+            Assert.That(op, Is.Not.EqualTo(null));
+            Assert.That(op.Equals("xxx"), Is.False);
+        });
     }
 
     [Test]
@@ -68,10 +78,13 @@ public class StringOperatorTest
     {
         var op = StringOperator.Anything;
 
-        Assert.IsTrue(op.Equals(op));
-        Assert.IsTrue(op.Equals(SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals(StringOperator.Equality));
-        Assert.IsFalse(op.Equals((StringOperator) null));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals(op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Equality));
+            Assert.That(op, Is.Not.EqualTo(null));
+        });
     }
 
     [Test]
@@ -79,7 +92,7 @@ public class StringOperatorTest
     {
         var op = Deserialize<StringOperator>("StringOperator_Contains");
 
-        Assert.IsNotNull(op);
+        Assert.That(op, Is.Not.Null);
         Contains_Evaluate(op);
     }
 
@@ -93,7 +106,9 @@ public class StringOperatorTest
     [Test]
     public void Contains_ShouldBeSingleton()
     {
-        Assert.AreSame(StringOperator.Contains, StringOperator.Contains);
+#pragma warning disable NUnit2009
+        Assert.That(StringOperator.Contains, Is.SameAs(StringOperator.Contains));
+#pragma warning restore NUnit2009
     }
 
     [Test]
@@ -104,17 +119,20 @@ public class StringOperatorTest
 
     private static void Contains_Evaluate(StringOperator op)
     {
-        Assert.IsFalse(op.Evaluate(null, null));
-        Assert.IsFalse(op.Evaluate(null, "Quartz"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsFalse(op.Evaluate(null, string.Empty));
-        Assert.IsFalse(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsTrue(op.Evaluate("Quartz", "tz"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tZ"));
-        Assert.IsTrue(op.Evaluate("Quartz", "ua"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Qu"));
-        Assert.IsFalse(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.False);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Quartz"), Is.True);
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate(null, string.Empty), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.False);
+        });
     }
 
     [Test]
@@ -129,7 +147,7 @@ public class StringOperatorTest
         }
         catch (ArgumentNullException ex)
         {
-            Assert.AreEqual("value", ex.ParamName);
+            Assert.That(ex.ParamName, Is.EqualTo("value"));
         }
     }
 
@@ -138,11 +156,14 @@ public class StringOperatorTest
     {
         var op = StringOperator.Contains;
 
-        Assert.IsTrue(op.Equals((object) op));
-        Assert.IsTrue(op.Equals((object) SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals((object) StringOperator.Anything));
-        Assert.IsFalse(op.Equals((object) null));
-        Assert.IsFalse(op.Equals("xxx"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals((object)op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op, Is.Not.EqualTo(null));
+            Assert.That(op.Equals("xxx"), Is.False);
+        });
     }
 
     [Test]
@@ -150,10 +171,13 @@ public class StringOperatorTest
     {
         var op = StringOperator.Contains;
 
-        Assert.IsTrue(op.Equals(op));
-        Assert.IsTrue(op.Equals(SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals(StringOperator.Anything));
-        Assert.IsFalse(op.Equals((StringOperator) null));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals(op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op.Equals(null), Is.False);
+        });
     }
 
     [Test]
@@ -161,11 +185,14 @@ public class StringOperatorTest
     {
         var op = new NothingOperator();
 
-        Assert.IsTrue(op.Equals((object) op));
-        Assert.IsTrue(op.Equals((object) SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals((object) StringOperator.Anything));
-        Assert.IsFalse(op.Equals((object) null));
-        Assert.IsFalse(op.Equals("xxx"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals((object)op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op, Is.Not.EqualTo(null));
+            Assert.That(op.Equals("xxx"), Is.False);
+        });
     }
 
     [Test]
@@ -173,10 +200,13 @@ public class StringOperatorTest
     {
         var op = new NothingOperator();
 
-        Assert.IsTrue(op.Equals(op));
-        Assert.IsTrue(op.Equals(SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals(StringOperator.Anything));
-        Assert.IsFalse(op.Equals((StringOperator) null));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals(op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op.Equals(null), Is.False);
+        });
     }
 
     [Test]
@@ -184,7 +214,7 @@ public class StringOperatorTest
     {
         var op = Deserialize<StringOperator>("StringOperator_EndsWith");
 
-        Assert.IsNotNull(op);
+        Assert.That(op, Is.Not.Null);
         EndsWith_Evaluate(op);
     }
 
@@ -198,7 +228,9 @@ public class StringOperatorTest
     [Test]
     public void EndsWith_ShouldBeSingleton()
     {
-        Assert.AreSame(StringOperator.EndsWith, StringOperator.EndsWith);
+#pragma warning disable NUnit2009
+        Assert.That(StringOperator.EndsWith, Is.SameAs(StringOperator.EndsWith));
+#pragma warning restore NUnit2009
     }
 
     [Test]
@@ -206,32 +238,38 @@ public class StringOperatorTest
     {
         var op = StringOperator.EndsWith;
 
-        Assert.IsFalse(op.Evaluate(null, null));
-        Assert.IsFalse(op.Evaluate(null, "Quartz"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsFalse(op.Evaluate(null, string.Empty));
-        Assert.IsFalse(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsTrue(op.Evaluate("Quartz", "tz"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "ua"));
-        Assert.IsFalse(op.Evaluate("Quartz", "Qu"));
-        Assert.IsFalse(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.False);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Quartz"), Is.True);
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate(null, string.Empty), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.False);
+        });
     }
 
     private static void EndsWith_Evaluate(StringOperator op)
     {
-        Assert.IsFalse(op.Evaluate(null, null));
-        Assert.IsFalse(op.Evaluate(null, "Quartz"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsFalse(op.Evaluate(null, string.Empty));
-        Assert.IsFalse(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsTrue(op.Evaluate("Quartz", "tz"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "ua"));
-        Assert.IsFalse(op.Evaluate("Quartz", "Qu"));
-        Assert.IsFalse(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.False);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Quartz"), Is.True);
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate(null, string.Empty), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.False);
+        });
     }
 
     [Test]
@@ -246,7 +284,7 @@ public class StringOperatorTest
         }
         catch (ArgumentNullException ex)
         {
-            Assert.AreEqual("value", ex.ParamName);
+            Assert.That(ex.ParamName, Is.EqualTo("value"));
         }
     }
 
@@ -255,11 +293,14 @@ public class StringOperatorTest
     {
         var op = StringOperator.EndsWith;
 
-        Assert.IsTrue(op.Equals((object) op));
-        Assert.IsTrue(op.Equals((object) SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals((object) StringOperator.Anything));
-        Assert.IsFalse(op.Equals((object) null));
-        Assert.IsFalse(op.Equals("xxx"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals((object)op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op, Is.Not.EqualTo(null));
+            Assert.That(op.Equals("xxx"), Is.False);
+        });
     }
 
     [Test]
@@ -267,10 +308,13 @@ public class StringOperatorTest
     {
         var op = StringOperator.EndsWith;
 
-        Assert.IsTrue(op.Equals(op));
-        Assert.IsTrue(op.Equals(SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals(StringOperator.Anything));
-        Assert.IsFalse(op.Equals((StringOperator) null));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals(op), Is.True);
+            Assert.That(op.Equals(SerializeAndDeserialize(op)), Is.True);
+            Assert.That(op.Equals(StringOperator.Anything), Is.False);
+            Assert.That(op.Equals(null), Is.False);
+        });
     }
 
     [Test]
@@ -278,7 +322,7 @@ public class StringOperatorTest
     {
         var op = Deserialize<StringOperator>("StringOperator_Equality");
 
-        Assert.IsNotNull(op);
+        Assert.That(op, Is.Not.Null);
         Equality_Evaluate(op);
     }
 
@@ -292,7 +336,9 @@ public class StringOperatorTest
     [Test]
     public void Equality_ShouldBeSingleton()
     {
-        Assert.AreSame(StringOperator.Equality, StringOperator.Equality);
+#pragma warning disable NUnit2009
+        Assert.That(StringOperator.Equality, Is.SameAs(StringOperator.Equality));
+#pragma warning restore NUnit2009
     }
 
     [Test]
@@ -303,18 +349,21 @@ public class StringOperatorTest
 
     private static void Equality_Evaluate(StringOperator op)
     {
-        Assert.IsTrue(op.Evaluate(null, null));
-        Assert.IsFalse(op.Evaluate(null, "Quartz"));
-        Assert.IsFalse(op.Evaluate("Quartz", null));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsFalse(op.Evaluate(null, string.Empty));
-        Assert.IsFalse(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tz"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "ua"));
-        Assert.IsFalse(op.Evaluate("Quartz", "Qu"));
-        Assert.IsFalse(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.True);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", null), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Quartz"), Is.True);
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate(null, string.Empty), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.False);
+        });
     }
 
     [Test]
@@ -322,11 +371,14 @@ public class StringOperatorTest
     {
         var op = StringOperator.Equality;
 
-        Assert.IsTrue(op.Equals((object) op));
-        Assert.IsTrue(op.Equals((object) SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals((object) StringOperator.Anything));
-        Assert.IsFalse(op.Equals((object) null));
-        Assert.IsFalse(op.Equals("xxx"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals((object)op), Is.True);
+            Assert.That(op.Equals((object)SerializeAndDeserialize(op)), Is.True);
+            Assert.That(op.Equals((object)StringOperator.Anything), Is.False);
+            Assert.That(op.Equals((object)null), Is.False);
+            Assert.That(op.Equals("xxx"), Is.False);
+        });
     }
 
     [Test]
@@ -334,10 +386,13 @@ public class StringOperatorTest
     {
         var op = StringOperator.Equality;
 
-        Assert.IsTrue(op.Equals(op));
-        Assert.IsTrue(op.Equals(SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals(StringOperator.Anything));
-        Assert.IsFalse(op.Equals((StringOperator) null));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals(op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op.Equals(null), Is.False);
+        });
     }
 
     [Test]
@@ -345,7 +400,7 @@ public class StringOperatorTest
     {
         var op = Deserialize<StringOperator>("StringOperator_StartsWith");
 
-        Assert.IsNotNull(op);
+        Assert.That(op, Is.Not.Null);
         StartsWith_Evaluate(op);
     }
 
@@ -359,7 +414,9 @@ public class StringOperatorTest
     [Test]
     public void StartsWith_ShouldBeSingleton()
     {
-        Assert.AreSame(StringOperator.StartsWith, StringOperator.StartsWith);
+#pragma warning disable NUnit2009
+        Assert.That(StringOperator.StartsWith, Is.SameAs(StringOperator.StartsWith));
+#pragma warning restore NUnit2009
     }
 
     [Test]
@@ -367,32 +424,38 @@ public class StringOperatorTest
     {
         var op = StringOperator.StartsWith;
 
-        Assert.IsFalse(op.Evaluate(null, null));
-        Assert.IsFalse(op.Evaluate(null, "Quartz"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsFalse(op.Evaluate(null, string.Empty));
-        Assert.IsFalse(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tz"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "ua"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Qu"));
-        Assert.IsFalse(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.False);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Quartz"));
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate(null, string.Empty), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.False);
+        });
     }
 
     private static void StartsWith_Evaluate(StringOperator op)
     {
-        Assert.IsFalse(op.Evaluate(null, null));
-        Assert.IsFalse(op.Evaluate(null, "Quartz"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Quartz"));
-        Assert.IsTrue(op.Evaluate("aa", new string('a', 2)));
-        Assert.IsFalse(op.Evaluate(null, string.Empty));
-        Assert.IsFalse(op.Evaluate("Quartz", "QuartZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tz"));
-        Assert.IsFalse(op.Evaluate("Quartz", "tZ"));
-        Assert.IsFalse(op.Evaluate("Quartz", "ua"));
-        Assert.IsTrue(op.Evaluate("Quartz", "Qu"));
-        Assert.IsFalse(op.Evaluate("Quartz", "QU"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Evaluate(null, null), Is.False);
+            Assert.That(op.Evaluate(null, "Quartz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Quartz"), Is.True);
+            Assert.That(op.Evaluate("aa", new string('a', 2)), Is.True);
+            Assert.That(op.Evaluate(null, string.Empty), Is.False);
+            Assert.That(op.Evaluate("Quartz", "QuartZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tz"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "tZ"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "ua"), Is.False);
+            Assert.That(op.Evaluate("Quartz", "Qu"), Is.True);
+            Assert.That(op.Evaluate("Quartz", "QU"), Is.False);
+        });
     }
 
     [Test]
@@ -407,7 +470,7 @@ public class StringOperatorTest
         }
         catch (ArgumentNullException ex)
         {
-            Assert.AreEqual("value", ex.ParamName);
+            Assert.That(ex.ParamName, Is.EqualTo("value"));
         }
     }
 
@@ -416,22 +479,28 @@ public class StringOperatorTest
     {
         var op = StringOperator.StartsWith;
 
-        Assert.IsTrue(op.Equals((object) op));
-        Assert.IsTrue(op.Equals((object) SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals((object) StringOperator.Anything));
-        Assert.IsFalse(op.Equals((object) null));
-        Assert.IsFalse(op.Equals("xxx"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(op.Equals((object)op), Is.True);
+            Assert.That(op.Equals((object)SerializeAndDeserialize(op)), Is.True);
+            Assert.That(op.Equals((object)StringOperator.Anything), Is.False);
+            Assert.That(op.Equals((object)null), Is.False);
+            Assert.That(op.Equals("xxx"), Is.False);
+        });
     }
 
     [Test]
     public void StartsWith_Equals_StringOperator()
     {
         var op = StringOperator.StartsWith;
+        Assert.Multiple(() =>
+        {
 
-        Assert.IsTrue(op.Equals(op));
-        Assert.IsTrue(op.Equals(SerializeAndDeserialize(op)));
-        Assert.IsFalse(op.Equals(StringOperator.Anything));
-        Assert.IsFalse(op.Equals((StringOperator) null));
+            Assert.That(op.Equals(op), Is.True);
+            Assert.That(op, Is.EqualTo(SerializeAndDeserialize(op)));
+            Assert.That(op, Is.Not.EqualTo(StringOperator.Anything));
+            Assert.That(op.Equals(null), Is.False);
+        });
     }
 
     [Serializable]
@@ -446,24 +515,19 @@ public class StringOperatorTest
     private static T SerializeAndDeserialize<T>(T stringOperator)
     {
         var formatter = new BinaryFormatter();
-
-        using (var ms = new MemoryStream())
-        {
-            formatter.Serialize(ms, stringOperator);
-
-            ms.Position = 0;
-
-            return (T) formatter.Deserialize(ms);
-        }
+        using var ms = new MemoryStream();
+        formatter.Serialize(ms, stringOperator);
+        ms.Position = 0;
+        return (T) formatter.Deserialize(ms);
     }
 
     private static T Deserialize<T>(string name)
     {
-        using (var fs = File.OpenRead(Path.Combine("Serialized", name + ".ser")))
-        {
-            BinaryFormatter binaryFormatter = new BinaryFormatter();
-            binaryFormatter.AssemblyFormat = FormatterAssemblyStyle.Simple;
-            return (T) binaryFormatter.Deserialize(fs);
-        }
+#pragma warning disable SYSLIB0050
+        using var fs = File.OpenRead(Path.Combine("Serialized", name + ".ser"));
+        BinaryFormatter binaryFormatter = new BinaryFormatter();
+        binaryFormatter.AssemblyFormat = FormatterAssemblyStyle.Simple;
+        return (T) binaryFormatter.Deserialize(fs);
+#pragma warning restore SYSLIB0050
     }
 }

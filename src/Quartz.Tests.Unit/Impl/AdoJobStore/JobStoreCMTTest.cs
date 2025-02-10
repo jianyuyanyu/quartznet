@@ -2,8 +2,6 @@ using System.Data.Common;
 
 using FakeItEasy;
 
-using NUnit.Framework;
-
 using Quartz.Impl.AdoJobStore;
 using Quartz.Util;
 
@@ -27,7 +25,7 @@ public class JobStoreCMTTest
     {
         public void ExecuteGetNonManagedConnection()
         {
-            GetNonManagedTXConnection();
+            GetNonManagedTXConnection().GetAwaiter().GetResult();
         }
     }
 

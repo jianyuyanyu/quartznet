@@ -20,6 +20,7 @@
 #endregion
 
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 
 using Quartz.Impl;
 using Quartz.Impl.AdoJobStore;
@@ -56,12 +57,12 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
     public static SchedulerBuilder Create(string? id, string? name)
     {
         var builder = Create();
-        if (!string.IsNullOrWhiteSpace(id) && id != null)
+        if (!string.IsNullOrWhiteSpace(id) && id is not null)
         {
             builder.SchedulerId = id;
         }
 
-        if (!string.IsNullOrWhiteSpace(name) && name != null)
+        if (!string.IsNullOrWhiteSpace(name) && name is not null)
         {
             builder.SchedulerName = name;
         }
@@ -83,6 +84,15 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
     public SchedulerBuilder WithName(string name)
     {
         SchedulerName = name;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the custom time provider type to be used.
+    /// </summary>
+    public SchedulerBuilder UseTimeProvider<T>() where T : TimeProvider, new()
+    {
+        SetProperty(StdSchedulerFactory.PropertyTimeProviderType, typeof(T).AssemblyQualifiedNameWithoutVersion());
         return this;
     }
 
@@ -117,9 +127,9 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         return UsePersistentStore<JobStoreTX>(options);
     }
 
-    public SchedulerBuilder UsePersistentStore<T>(Action<PersistentStoreOptions> options) where T : IJobStore
+    public SchedulerBuilder UsePersistentStore<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>(Action<PersistentStoreOptions> options) where T : IJobStore
     {
-        if (options == null)
+        if (options is null)
         {
             ThrowHelper.ThrowArgumentNullException(nameof(options));
         }
@@ -128,13 +138,13 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         return this;
     }
 
-    public SchedulerBuilder UseJobFactory<T>() where T : IJobFactory
+    public SchedulerBuilder UseJobFactory<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>() where T : IJobFactory
     {
         SetProperty(StdSchedulerFactory.PropertySchedulerJobFactoryType, typeof(T).AssemblyQualifiedNameWithoutVersion());
         return this;
     }
 
-    public SchedulerBuilder UseTypeLoader<T>() where T : ITypeLoadHelper
+    public SchedulerBuilder UseTypeLoader<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>() where T : ITypeLoadHelper
     {
         SetProperty(StdSchedulerFactory.PropertySchedulerTypeLoadHelperType, typeof(T).AssemblyQualifiedNameWithoutVersion());
         return this;
@@ -160,7 +170,8 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
     /// <summary>
     /// Uses the default thread pool, which uses the default task scheduler.
     /// </summary>
-    public SchedulerBuilder UseThreadPool<T>(Action<ThreadPoolOptions>? configure = null) where T : IThreadPool
+    public SchedulerBuilder UseThreadPool<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>(
+        Action<ThreadPoolOptions>? configure = null) where T : IThreadPool
     {
         SetProperty("quartz.threadPool.type", typeof(T).AssemblyQualifiedNameWithoutVersion());
         configure?.Invoke(new ThreadPoolOptions(this));
@@ -206,24 +217,13 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         return this;
     }
 
-#if REMOTING
-    /// <summary>
-    /// Makes this scheduler a proxy that calls another scheduler instance via remote invocation
-    /// using the default mechanism (for full .NET Framework it's remoting, otherwise unsupported).
-    /// </summary>
-    /// <param name="address">Connection address</param>
-    public SchedulerBuilder ProxyToRemoteScheduler(string address)
-    {
-        return ProxyToRemoteScheduler<RemotingSchedulerProxyFactory>(address);
-    }
-#endif // REMOTING
-
     /// <summary>
     /// Makes this scheduler a proxy that calls another scheduler instance via remote invocation
     /// using the typeof T proxy generator.
     /// </summary>
     /// <param name="address">Connection address</param>
-    public SchedulerBuilder ProxyToRemoteScheduler<T>(string address) where T : IRemotableSchedulerProxyFactory
+    public SchedulerBuilder ProxyToRemoteScheduler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>(
+        string address) where T : IRemotableSchedulerProxyFactory
     {
         SetProperty(StdSchedulerFactory.PropertySchedulerProxy, "true");
         SetProperty(StdSchedulerFactory.PropertySchedulerProxyType, typeof(T).AssemblyQualifiedNameWithoutVersion());
@@ -281,6 +281,14 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
     public TimeSpan BatchTriggerAcquisitionFireAheadTimeWindow
     {
         set => SetProperty(StdSchedulerFactory.PropertySchedulerBatchTimeWindow, ((int) value.TotalMilliseconds).ToString());
+    }
+
+    /// <summary>
+    /// Whether Quartz should try to validate provided configuration keys. Validation is done by default and can help with typos in configuration keys.
+    /// </summary>
+    public bool CheckConfiguration
+    {
+        set => SetProperty(StdSchedulerFactory.PropertyCheckConfiguration, value.ToString());
     }
 
     /// <inheritdoc cref="InterruptJobsOnShutdown"/>
@@ -392,30 +400,24 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         /// </summary>
         /// <param name="provider">Valid provider name to configure driver details.</param>
         /// <param name="configurer">Callback to refine configuration.</param>
+        /// <param name="dataSourceName">Data source name to use.</param>
         /// <returns></returns>
         public void UseGenericDatabase(
             string provider,
+            string dataSourceName,
             Action<AdoProviderOptions>? configurer = null)
         {
             SetProperty("quartz.jobStore.driverDelegateType", typeof(StdAdoDelegate).AssemblyQualifiedNameWithoutVersion());
-            SetProperty("quartz.jobStore.dataSource", AdoProviderOptions.DefaultDataSourceName);
-            SetProperty($"quartz.dataSource.{AdoProviderOptions.DefaultDataSourceName}.provider", provider);
+            SetProperty("quartz.jobStore.dataSource", dataSourceName);
+            SetProperty($"quartz.dataSource.{dataSourceName}.provider", provider);
 
-            configurer?.Invoke(new AdoProviderOptions(this));
-        }
-
-        /// <summary>
-        /// Configure binary serialization, consider using JSON instead which requires extra package Quartz.Serialization.Newtonsoft.
-        /// </summary>
-        public void UseBinarySerializer()
-        {
-            UseSerializer<BinaryObjectSerializer>();
+            configurer?.Invoke(new AdoProviderOptions(this, dataSourceName));
         }
 
         /// <summary>
         /// Use custom serializer.
         /// </summary>
-        public void UseSerializer<T>() where T : IObjectSerializer
+        public void UseSerializer<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>() where T : IObjectSerializer
         {
             SetProperty("quartz.serializer.type", typeof(T).AssemblyQualifiedNameWithoutVersion());
         }
@@ -457,21 +459,22 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
 
     public sealed class InMemoryStoreOptions : PropertiesHolder
     {
-        public InMemoryStoreOptions(SchedulerBuilder parent) : base(parent)
+        internal InMemoryStoreOptions(SchedulerBuilder parent) : base(parent)
         {
         }
     }
 
     public sealed class AdoProviderOptions
     {
-        public const string DefaultDataSourceName = "default";
-
         private readonly PersistentStoreOptions options;
 
-        public AdoProviderOptions(PersistentStoreOptions options)
+        internal AdoProviderOptions(PersistentStoreOptions options, string dataSourceName)
         {
             this.options = options;
+            DataSourceName = dataSourceName;
         }
+
+        private string DataSourceName { get; }
 
         /// <summary>
         /// The prefix that should be pre-pended to all table names, defaults to QRTZ_.
@@ -486,7 +489,7 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         /// </summary>
         public string ConnectionString
         {
-            set => options.SetProperty($"quartz.dataSource.{DefaultDataSourceName}.connectionString", value);
+            set => options.SetProperty($"quartz.dataSource.{DataSourceName}.connectionString", value);
         }
 
         /// <summary>
@@ -494,7 +497,7 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         /// </summary>
         public string ConnectionStringName
         {
-            set => options.SetProperty($"quartz.dataSource.{DefaultDataSourceName}.connectionStringName", value);
+            set => options.SetProperty($"quartz.dataSource.{DataSourceName}.connectionStringName", value);
         }
 
         /// <summary>
@@ -508,9 +511,17 @@ public sealed class SchedulerBuilder : PropertiesHolder, IPropertyConfigurationR
         /// <summary>
         /// Use given connection provider.
         /// </summary>
-        public void UseConnectionProvider<T>() where T : IDbProvider
+        public void UseConnectionProvider<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>() where T : IDbProvider
         {
-            options.SetProperty($"quartz.dataSource.{DefaultDataSourceName}.connectionProvider.type", typeof(T).AssemblyQualifiedNameWithoutVersion());
+            options.SetProperty($"quartz.dataSource.{DataSourceName}.connectionProvider.type", typeof(T).AssemblyQualifiedNameWithoutVersion());
+        }
+
+        /// <summary>
+        /// Use a <see cref="DataSourceDbProvider"/>. Requires <see cref="ServiceCollectionExtensions.AddDataSourceProvider"/> to have been called.
+        /// </summary>
+        public void UseDataSourceConnectionProvider()
+        {
+            UseConnectionProvider<DataSourceDbProvider>();
         }
     }
 }
@@ -519,112 +530,121 @@ public static class AdoProviderExtensions
 {
     public static void UseSqlServer(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UseSqlServer(c => c.ConnectionString = connectionString);
+        options.UseSqlServer(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     public static void UseSqlServer(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
         options.SetProperty("quartz.jobStore.driverDelegateType", typeof(SqlServerDelegate).AssemblyQualifiedNameWithoutVersion());
-        options.SetProperty("quartz.jobStore.dataSource", SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName);
-        options.SetProperty($"quartz.dataSource.{SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName}.provider", "SqlServer");
+        options.SetProperty("quartz.jobStore.dataSource", dataSourceName);
+        options.SetProperty($"quartz.dataSource.{dataSourceName}.provider", "SqlServer");
 
-        var adoProviderOptions = new SchedulerBuilder.AdoProviderOptions(options);
-        configurer.Invoke(adoProviderOptions);
+        configurer.Invoke(new SchedulerBuilder.AdoProviderOptions(options, dataSourceName));
     }
 
     public static void UsePostgres(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UsePostgres(c => c.ConnectionString = connectionString);
+        options.UsePostgres(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     public static void UsePostgres(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
+        var providerOptions = new SchedulerBuilder.AdoProviderOptions(options, dataSourceName);
+
         options.SetProperty("quartz.jobStore.driverDelegateType", typeof(PostgreSQLDelegate).AssemblyQualifiedNameWithoutVersion());
-        options.SetProperty("quartz.jobStore.dataSource", SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName);
-        options.SetProperty($"quartz.dataSource.{SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName}.provider", "Npgsql");
+        options.SetProperty("quartz.jobStore.dataSource", dataSourceName);
+        options.SetProperty($"quartz.dataSource.{dataSourceName}.provider", "Npgsql");
 
-        var adoProviderOptions = new SchedulerBuilder.AdoProviderOptions(options);
-        configurer.Invoke(adoProviderOptions);
+        configurer.Invoke(providerOptions);
     }
 
     public static void UseMySql(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UseMySql(c => c.ConnectionString = connectionString);
+        options.UseMySql(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     public static void UseMySql(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
-        UseMySqlInternal(options, "MySql", configurer);
+        UseMySqlInternal(options, "MySql", dataSourceName, configurer);
     }
 
     public static void UseMySqlConnector(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
-        UseMySqlInternal(options, "MySqlConnector", configurer);
+        UseMySqlInternal(options, "MySqlConnector", dataSourceName, configurer);
     }
 
     internal static void UseMySqlInternal(
         this SchedulerBuilder.PersistentStoreOptions options,
         string provider,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
         options.SetProperty("quartz.jobStore.driverDelegateType", typeof(MySQLDelegate).AssemblyQualifiedNameWithoutVersion());
-        options.SetProperty("quartz.jobStore.dataSource", SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName);
-        options.SetProperty($"quartz.dataSource.{SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName}.provider", provider);
+        options.SetProperty("quartz.jobStore.dataSource", dataSourceName);
+        options.SetProperty($"quartz.dataSource.{dataSourceName}.provider", provider);
 
-        var adoProviderOptions = new SchedulerBuilder.AdoProviderOptions(options);
-        configurer.Invoke(adoProviderOptions);
+        configurer.Invoke(new SchedulerBuilder.AdoProviderOptions(options, dataSourceName));
     }
 
     public static void UseFirebird(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UseFirebird(c => c.ConnectionString = connectionString);
+        options.UseFirebird(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     public static void UseFirebird(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
         options.SetProperty("quartz.jobStore.driverDelegateType", typeof(FirebirdDelegate).AssemblyQualifiedNameWithoutVersion());
-        options.SetProperty("quartz.jobStore.dataSource", SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName);
-        options.SetProperty($"quartz.dataSource.{SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName}.provider", "Firebird");
+        options.SetProperty("quartz.jobStore.dataSource", dataSourceName);
+        options.SetProperty($"quartz.dataSource.{dataSourceName}.provider", "Firebird");
 
-        var adoProviderOptions = new SchedulerBuilder.AdoProviderOptions(options);
-        configurer.Invoke(adoProviderOptions);
+        configurer.Invoke(new SchedulerBuilder.AdoProviderOptions(options, dataSourceName));
     }
 
     public static void UseOracle(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UseOracle(c => c.ConnectionString = connectionString);
+        options.UseOracle(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     public static void UseOracle(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
         options.SetProperty("quartz.jobStore.driverDelegateType", typeof(OracleDelegate).AssemblyQualifiedNameWithoutVersion());
-        options.SetProperty("quartz.jobStore.dataSource", SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName);
-        options.SetProperty($"quartz.dataSource.{SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName}.provider", "OracleODPManaged");
+        options.SetProperty("quartz.jobStore.dataSource", dataSourceName);
+        options.SetProperty($"quartz.dataSource.{dataSourceName}.provider", "OracleODPManaged");
 
-        var adoProviderOptions = new SchedulerBuilder.AdoProviderOptions(options);
-        configurer.Invoke(adoProviderOptions);
+        configurer.Invoke(new SchedulerBuilder.AdoProviderOptions(options, dataSourceName));
     }
 
     /// <summary>
@@ -632,9 +652,10 @@ public static class AdoProviderExtensions
     /// </summary>
     public static void UseSQLite(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UseSQLite(c => c.ConnectionString = connectionString);
+        options.UseSQLite(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     /// <summary>
@@ -642,9 +663,10 @@ public static class AdoProviderExtensions
     /// </summary>
     public static void UseSQLite(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
-        options.UseSQLite("SQLite", configurer);
+        options.UseSQLite("SQLite", dataSourceName, configurer);
     }
 
     /// <summary>
@@ -652,9 +674,10 @@ public static class AdoProviderExtensions
     /// </summary>
     public static void UseMicrosoftSQLite(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         string connectionString)
     {
-        options.UseMicrosoftSQLite(c => c.ConnectionString = connectionString);
+        options.UseMicrosoftSQLite(dataSourceName, c => c.ConnectionString = connectionString);
     }
 
     /// <summary>
@@ -662,21 +685,22 @@ public static class AdoProviderExtensions
     /// </summary>
     public static void UseMicrosoftSQLite(
         this SchedulerBuilder.PersistentStoreOptions options,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
-        options.UseSQLite("SQLite-Microsoft", configurer);
+        options.UseSQLite("SQLite-Microsoft", dataSourceName, configurer);
     }
 
     private static void UseSQLite(
         this SchedulerBuilder.PersistentStoreOptions options,
         string provider,
+        string dataSourceName,
         Action<SchedulerBuilder.AdoProviderOptions> configurer)
     {
         options.SetProperty("quartz.jobStore.driverDelegateType", typeof(SQLiteDelegate).AssemblyQualifiedNameWithoutVersion());
-        options.SetProperty("quartz.jobStore.dataSource", SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName);
-        options.SetProperty($"quartz.dataSource.{SchedulerBuilder.AdoProviderOptions.DefaultDataSourceName}.provider", provider);
+        options.SetProperty("quartz.jobStore.dataSource", dataSourceName);
+        options.SetProperty($"quartz.dataSource.{dataSourceName}.provider", provider);
 
-        var adoProviderOptions = new SchedulerBuilder.AdoProviderOptions(options);
-        configurer.Invoke(adoProviderOptions);
+        configurer.Invoke(new SchedulerBuilder.AdoProviderOptions(options, dataSourceName));
     }
 }

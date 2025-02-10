@@ -23,8 +23,6 @@ using System.Collections.Specialized;
 
 using FluentAssertions;
 
-using NUnit.Framework;
-
 using Quartz.Impl;
 
 namespace Quartz.Tests.Unit.Impl;
@@ -88,7 +86,7 @@ public class StdSchedulerFactoryTest
 
         factory.Initialize();
         var scheduler = await factory.GetScheduler();
-        Assert.AreEqual("QuartzScheduler", scheduler.SchedulerName);
+        Assert.That(scheduler.SchedulerName, Is.EqualTo("QuartzScheduler"));
 
         Environment.SetEnvironmentVariable("quartz.scheduler.instanceName", "fromSystemProperties");
         // Make sure to pass the serializer type as an env var instead of in a NameValueCollection (as in the previous test)
@@ -96,7 +94,7 @@ public class StdSchedulerFactoryTest
         Environment.SetEnvironmentVariable("quartz.serializer.type", TestConstants.DefaultSerializerType);
         factory = new StdSchedulerFactory();
         scheduler = await factory.GetScheduler();
-        Assert.AreEqual("fromSystemProperties", scheduler.SchedulerName);
+        Assert.That(scheduler.SchedulerName, Is.EqualTo("fromSystemProperties"));
     }
 
     [Test]
@@ -107,6 +105,40 @@ public class StdSchedulerFactoryTest
         collection["quartz.scheduler.idleWaitTime"] = "123";
         collection["quartz.scheduler.test"] = "foo";
         StdSchedulerFactory factory = new TestStdSchedulerFactory(collection);
+    }
+
+    [Test]
+    public async Task TestFactoryShouldLoadPropertiesFromFileWhosePathIsGivenByEnvVariable()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            const string InstanceName = "TestInstance";
+
+            File.WriteAllText(tempFile, $"{StdSchedulerFactory.PropertySchedulerInstanceName}={InstanceName}");
+
+            Environment.SetEnvironmentVariable(StdSchedulerFactory.PropertiesFile, tempFile);
+
+            var factory = new StdSchedulerFactory();
+            factory.Initialize(); // <- optional, because `GetScheduler` does it anyway
+            var scheduler = await factory.GetScheduler();
+
+            Assert.That(scheduler.SchedulerName, Is.EqualTo(InstanceName));
+        }
+        finally
+        {
+            // clean up of temp file and env var
+            try
+            {
+                File.Delete(tempFile);
+            }
+            catch (Exception)
+            {
+                // ignore temp file delete error
+            }
+
+            Environment.SetEnvironmentVariable(StdSchedulerFactory.PropertiesFile, null);
+        }
     }
 
     [Test]
@@ -129,6 +161,11 @@ public class StdSchedulerFactoryTest
 
         public TestStdSchedulerFactory(NameValueCollection nameValueCollection) : base(nameValueCollection)
         {
+        }
+
+        protected override bool IsSupportedConfigurationKey(string configurationKey)
+        {
+            return configurationKey == PropertyTest || base.IsSupportedConfigurationKey(configurationKey);
         }
     }
 }

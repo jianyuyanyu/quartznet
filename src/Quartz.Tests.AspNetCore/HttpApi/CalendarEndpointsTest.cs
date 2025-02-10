@@ -1,8 +1,7 @@
 using FakeItEasy;
 
 using FluentAssertions;
-
-using NUnit.Framework;
+using FluentAssertions.Execution;
 
 using Quartz.Impl.Calendar;
 using Quartz.Tests.AspNetCore.Support;
@@ -14,13 +13,15 @@ public class CalendarEndpointsTest : WebApiTest
     [Test]
     public async Task GetCalendarNamesShouldWork()
     {
-        A.CallTo(() => FakeScheduler.GetCalendarNames(A<CancellationToken>._)).Returns(new[] { "Calendar 1", "Calendar 2" });
+        A.CallTo(() => FakeScheduler.GetCalendarNames(A<CancellationToken>._)).Returns(["Calendar 1", "Calendar 2"]);
 
         var calendarNames = await HttpScheduler.GetCalendarNames();
-
-        calendarNames.Count.Should().Be(2);
-        calendarNames.Should().ContainSingle(x => x == "Calendar 1");
-        calendarNames.Should().ContainSingle(x => x == "Calendar 2");
+        using (new AssertionScope())
+        {
+            calendarNames.Count.Should().Be(2);
+            calendarNames.Should().ContainSingle(x => x == "Calendar 1");
+            calendarNames.Should().ContainSingle(x => x == "Calendar 2");
+        }
     }
 
     [Test]
@@ -32,7 +33,7 @@ public class CalendarEndpointsTest : WebApiTest
         A.CallTo(() => FakeScheduler.GetCalendar("HolidayCalendar", A<CancellationToken>._)).Returns(TestData.HolidayCalendar);
         A.CallTo(() => FakeScheduler.GetCalendar("MonthlyCalendar", A<CancellationToken>._)).Returns(TestData.MonthlyCalendar);
         A.CallTo(() => FakeScheduler.GetCalendar("WeeklyCalendar", A<CancellationToken>._)).Returns(TestData.WeeklyCalendar);
-        A.CallTo(() => FakeScheduler.GetCalendar("NonExistingCalendar", A<CancellationToken>._)).Returns((ICalendar?) null);
+        A.CallTo(() => FakeScheduler.GetCalendar("NonExistingCalendar", A<CancellationToken>._)).Returns(null);
 
         var calendar = await HttpScheduler.GetCalendar("AnnualCalendar");
         calendar.Should().BeEquivalentTo(TestData.AnnualCalendar);

@@ -76,15 +76,15 @@ Here are some full examples:
 
 | **Expression**             | **Meaning**                                                                                                                         |
 |--:-------------------------|--:----------------------------------------------------------------------------------------------------------------------------------|
-| `0 0 12 ** ?`              | Fire at 12pm (noon) every day                                                                                                       |
-| `0 15 10 ? **`             | Fire at 10:15am every day                                                                                                           |
-| `0 15 10 ** ?`             | Fire at 10:15am every day                                                                                                           |
-| `0 15 10 ** ? *`           | Fire at 10:15am every day                                                                                                           |
-| `0 15 10 ** ? 2005`        | Fire at 10:15am every day during the year 2005                                                                                      |
-| `0 *14* * ?`               | Fire every minute starting at 2pm and ending at 2:59pm, every day                                                                   |
-| `0 0/5 14 ** ?`            | Fire every 5 minutes starting at 2pm and ending at 2:55pm, every day                                                                |
-| `0 0/5 14,18 ** ?`         | Fire every 5 minutes starting at 2pm and ending at 2:55pm, AND fire every 5 minutes starting at 6pm and ending at 6:55pm, every day |
-| `0 0-5 14 ** ?`            | Fire every minute starting at 2pm and ending at 2:05pm, every day                                                                   |
+| `0 0 12 * * ?`             | Fire at 12pm (noon) every day                                                                                                       |
+| `0 15 10 ? * *`            | Fire at 10:15am every day                                                                                                           |
+| `0 15 10 * * ?`            | Fire at 10:15am every day                                                                                                           |
+| `0 15 10 * * ? *`          | Fire at 10:15am every day                                                                                                           |
+| `0 15 10 * * ? 2005`       | Fire at 10:15am every day during the year 2005                                                                                      |
+| `0 * 14 * * ?`             | Fire every minute starting at 2pm and ending at 2:59pm, every day                                                                   |
+| `0 0/5 14 * * ?`           | Fire every 5 minutes starting at 2pm and ending at 2:55pm, every day                                                                |
+| `0 0/5 14,18 * * ?`        | Fire every 5 minutes starting at 2pm and ending at 2:55pm, AND fire every 5 minutes starting at 6pm and ending at 6:55pm, every day |
+| `0 0-5 14 * * ?`           | Fire every minute starting at 2pm and ending at 2:05pm, every day                                                                   |
 | `0 10,44 14 ? 3 WED`       | Fire at 2:10pm and at 2:44pm every Wednesday in the month of March.                                                                 |
 | `0 15 10 ? * MON-FRI`      | Fire at 10:15am every Monday, Tuesday, Wednesday, Thursday and Friday                                                               |
 | `0 15 10 15 * ?`           | Fire at 10:15am on the 15th day of every month                                                                                      |
@@ -97,6 +97,10 @@ Here are some full examples:
 | `0 0 12 1/5 * ?`           | Fire at 12pm (noon) every 5 days every month, starting on the first day of the month.                                               |
 | `0 11 11 11 11 ?`          | Fire every November 11th at 11:11am.                                                                                                |
 | `0 15 10 1,2,3 * MON,FRI`  | Fire at 10:15am on the 1st, 2nd, 3rd of the month, and every Monday and Friday                                                      |
+
+::: tip
+Pay attention to the effects of '?' and '*' in the day-of-week and day-of-month fields!
+:::
 
 ## Notes
 

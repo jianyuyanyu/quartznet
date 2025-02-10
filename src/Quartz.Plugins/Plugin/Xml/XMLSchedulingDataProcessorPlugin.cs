@@ -23,7 +23,7 @@ using Microsoft.Extensions.Logging;
 
 using Quartz.Impl.Triggers;
 using Quartz.Job;
-using Quartz.Logging;
+using Quartz.Diagnostics;
 using Quartz.Simpl;
 using Quartz.Spi;
 using Quartz.Util;
@@ -54,26 +54,35 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
     private bool started;
 
     private readonly HashSet<string> jobTriggerNameSet = new HashSet<string>();
+    private readonly ILogger<XMLSchedulingDataProcessorPlugin> logger;
+    private readonly TimeProvider timeProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="XMLSchedulingDataProcessorPlugin"/> class.
     /// </summary>
     public XMLSchedulingDataProcessorPlugin()
+        : this(LogProvider.CreateLogger<XMLSchedulingDataProcessorPlugin>(), new SimpleTypeLoadHelper(), TimeProvider.System)
     {
-        logger = LogProvider.CreateLogger<XMLSchedulingDataProcessorPlugin>();
     }
 
     /// <summary>
-    /// Gets the log.
+    /// Initializes a new instance of the <see cref="XMLSchedulingDataProcessorPlugin"/> class.
     /// </summary>
-    /// <value>The log.</value>
-    private ILogger<XMLSchedulingDataProcessorPlugin> logger { get; }
+    public XMLSchedulingDataProcessorPlugin(
+        ILogger<XMLSchedulingDataProcessorPlugin> logger,
+        ITypeLoadHelper typeLoadHelper,
+        TimeProvider timeProvider)
+    {
+        this.logger = logger;
+        this.timeProvider = timeProvider;
+        TypeLoadHelper = typeLoadHelper;
+    }
 
     public string Name { get; private set; } = null!;
 
     public IScheduler Scheduler { get; private set; } = null!;
 
-    protected ITypeLoadHelper TypeLoadHelper { get; private set; } = null!;
+    protected ITypeLoadHelper TypeLoadHelper { get; private set; }
 
     /// <summary>
     /// Comma separated list of file names (with paths) to the XML files that should be read.
@@ -125,8 +134,6 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
     {
         Name = pluginName;
         Scheduler = scheduler;
-        TypeLoadHelper = new SimpleTypeLoadHelper();
-        TypeLoadHelper.Initialize();
 
         logger.LogInformation("Registering Quartz Job Initialization Plug-in.");
 
@@ -173,7 +180,7 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
                         // TODO: convert to use builder
                         var trig = new SimpleTriggerImpl();
                         trig.Key = tKey;
-                        trig.StartTimeUtc = SystemTime.UtcNow();
+                        trig.StartTimeUtc = timeProvider.GetUtcNow();
                         trig.EndTimeUtc = null;
                         trig.RepeatCount = SimpleTriggerImpl.RepeatIndefinitely;
                         trig.RepeatInterval = ScanInterval;
@@ -266,14 +273,17 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
 
     private async ValueTask ProcessFile(JobFile? jobFile, CancellationToken cancellationToken = default)
     {
-        if (jobFile == null || jobFile.FileFound == false)
+        if (jobFile is null || jobFile.FileFound == false)
         {
             return;
         }
 
         try
         {
-            XMLSchedulingDataProcessor processor = new XMLSchedulingDataProcessor(LogProvider.CreateLogger<XMLSchedulingDataProcessor>(), TypeLoadHelper);
+            XMLSchedulingDataProcessor processor = new(
+                LogProvider.CreateLogger<XMLSchedulingDataProcessor>(),
+                TypeLoadHelper,
+                timeProvider);
 
             processor.AddJobGroupToNeverDelete(JobInitializationPluginName);
             processor.AddTriggerGroupToNeverDelete(JobInitializationPluginName);
@@ -286,15 +296,12 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
         }
         catch (Exception e)
         {
-            var message = "Could not schedule jobs and triggers from file " + jobFile.FileName + ": " + e.Message;
             if (FailOnSchedulingError)
             {
-                throw new SchedulerException(message, e);
+                throw new SchedulerException($"Could not schedule jobs and triggers from file {jobFile.FileName}: {e.Message}", e);
             }
-            else
-            {
-                logger.LogError(e, message);
-            }
+
+            logger.LogError(e, "Could not schedule jobs and triggers from file {FileName}: {Message}", jobFile.FileName, e.Message);
         }
     }
 
@@ -331,7 +338,7 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
 
         public string FileBasename { get; private set; } = null!;
 
-        public ValueTask Initialize(CancellationToken cancellationToken = default)
+        public async ValueTask Initialize(CancellationToken cancellationToken = default)
         {
             Stream? f = null;
             try
@@ -355,7 +362,7 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
                     }
                 }
 
-                if (f == null)
+                if (f is null)
                 {
                     if (plugin.FailOnFileNotFound)
                     {
@@ -378,15 +385,16 @@ public class XMLSchedulingDataProcessorPlugin : ISchedulerPlugin, IFileScanListe
             {
                 try
                 {
-                    f?.Dispose();
+                    if (f is not null)
+                    {
+                        await f.DisposeAsync().ConfigureAwait(false);
+                    }
                 }
                 catch (IOException ioe)
                 {
                     plugin.logger.LogWarning(ioe, "Error closing jobs file {FileName}", FileName);
                 }
             }
-
-            return default;
         }
     }
 }

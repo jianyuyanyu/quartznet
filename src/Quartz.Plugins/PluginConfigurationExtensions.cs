@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 using Quartz.Plugin.Interrupt;
@@ -8,10 +9,14 @@ namespace Quartz;
 
 public static class PluginConfigurationExtensions
 {
-    public static T UseXmlSchedulingConfiguration<T>(
+    public static T UseXmlSchedulingConfiguration<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>(
         this T configurer,
         Action<XmlSchedulingOptions> configure) where T : IPropertyConfigurationRoot
     {
+        if (configurer is IContainerConfigurationSupport containerConfigurationSupport)
+        {
+            containerConfigurationSupport.RegisterSingleton<XMLSchedulingDataProcessorPlugin, XMLSchedulingDataProcessorPlugin>();
+        }
         configurer.SetProperty("quartz.plugin.xml.type", typeof(XMLSchedulingDataProcessorPlugin).AssemblyQualifiedNameWithoutVersion());
         configure.Invoke(new XmlSchedulingOptions(configurer));
         return configurer;
@@ -20,10 +25,14 @@ public static class PluginConfigurationExtensions
     /// <summary>
     /// Configures <see cref="JobInterruptMonitorPlugin "/> into use.
     /// </summary>
-    public static T UseJobAutoInterrupt<T>(
+    public static T UseJobAutoInterrupt<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>(
         this T configurer,
         Action<JobAutoInterruptOptions>? configure = null) where T : IPropertyConfigurationRoot
     {
+        if (configurer is IContainerConfigurationSupport containerConfigurationSupport)
+        {
+            containerConfigurationSupport.RegisterSingleton<JobInterruptMonitorPlugin, JobInterruptMonitorPlugin>();
+        }
         configurer.SetProperty("quartz.plugin.jobAutoInterrupt.type", typeof(JobInterruptMonitorPlugin).AssemblyQualifiedNameWithoutVersion());
         configure?.Invoke(new JobAutoInterruptOptions(configurer));
         return configurer;

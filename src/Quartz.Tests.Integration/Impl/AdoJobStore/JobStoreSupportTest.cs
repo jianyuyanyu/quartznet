@@ -1,7 +1,5 @@
 using Npgsql;
 
-using NUnit.Framework;
-
 using Quartz.Impl.AdoJobStore;
 
 namespace Quartz.Tests.Integration.Impl.AdoJobStore;
@@ -22,7 +20,7 @@ public class JobStoreSupportTest
 
     private class SqlExceptionSimulator : Exception
     {
-        public IEnumerable<SqlErrorSimulator> Errors => new List<SqlErrorSimulator>()
+        public IEnumerable<SqlErrorSimulator> Errors => new List<SqlErrorSimulator>
         {
             new SqlErrorSimulator()
         };

@@ -1,8 +1,7 @@
 using FakeItEasy;
 
 using FluentAssertions;
-
-using NUnit.Framework;
+using FluentAssertions.Execution;
 
 using Quartz.HttpClient;
 using Quartz.Impl.Matchers;
@@ -18,13 +17,15 @@ public class TriggerEndpointsTest : WebApiTest
     [Test]
     public async Task GetTriggerKeysShouldWork()
     {
-        A.CallTo(() => FakeScheduler.GetTriggerKeys(A<GroupMatcher<TriggerKey>>._, A<CancellationToken>._)).Returns(new[] { triggerKeyOne, triggerKeyTwo });
+        A.CallTo(() => FakeScheduler.GetTriggerKeys(A<GroupMatcher<TriggerKey>>._, A<CancellationToken>._)).Returns([triggerKeyOne, triggerKeyTwo]);
 
         var triggerKeys = await HttpScheduler.GetTriggerKeys(GroupMatcher<TriggerKey>.AnyGroup());
-
-        triggerKeys.Count.Should().Be(2);
-        triggerKeys.Should().ContainSingle(x => x.Equals(triggerKeyOne));
-        triggerKeys.Should().ContainSingle(x => x.Equals(triggerKeyTwo));
+        using (new AssertionScope())
+        {
+            triggerKeys.Count.Should().Be(2);
+            triggerKeys.Should().ContainSingle(x => x.Equals(triggerKeyOne));
+            triggerKeys.Should().ContainSingle(x => x.Equals(triggerKeyTwo));
+        }
 
         var matchers = new[]
         {
@@ -50,7 +51,7 @@ public class TriggerEndpointsTest : WebApiTest
         A.CallTo(() => FakeScheduler.GetTrigger(TestData.CronTrigger.Key, A<CancellationToken>._)).Returns(TestData.CronTrigger);
         A.CallTo(() => FakeScheduler.GetTrigger(TestData.DailyTimeIntervalTrigger.Key, A<CancellationToken>._)).Returns(TestData.DailyTimeIntervalTrigger);
         A.CallTo(() => FakeScheduler.GetTrigger(TestData.SimpleTrigger.Key, A<CancellationToken>._)).Returns(TestData.SimpleTrigger);
-        A.CallTo(() => FakeScheduler.GetTrigger(triggerKeyOne, A<CancellationToken>._)).Returns((ITrigger?) null);
+        A.CallTo(() => FakeScheduler.GetTrigger(triggerKeyOne, A<CancellationToken>._)).Returns(null);
 
         var trigger = await HttpScheduler.GetTrigger(TestData.CalendarIntervalTrigger.Key);
         trigger.Should().BeEquivalentTo(TestData.CalendarIntervalTrigger);
@@ -151,7 +152,7 @@ public class TriggerEndpointsTest : WebApiTest
     [Test]
     public async Task GetTriggerGroupNamesShouldWork()
     {
-        A.CallTo(() => FakeScheduler.GetTriggerGroupNames(A<CancellationToken>._)).Returns(new[] { "group1", "group2" });
+        A.CallTo(() => FakeScheduler.GetTriggerGroupNames(A<CancellationToken>._)).Returns(["group1", "group2"]);
 
         var triggerGroupNames = await HttpScheduler.GetTriggerGroupNames();
 
@@ -163,7 +164,7 @@ public class TriggerEndpointsTest : WebApiTest
     [Test]
     public async Task GetPausedTriggerGroupsShouldWork()
     {
-        A.CallTo(() => FakeScheduler.GetPausedTriggerGroups(A<CancellationToken>._)).Returns(new[] { "group1" });
+        A.CallTo(() => FakeScheduler.GetPausedTriggerGroups(A<CancellationToken>._)).Returns(["group1"]);
 
         var triggerGroupNames = await HttpScheduler.GetPausedTriggerGroups();
 
@@ -326,7 +327,7 @@ public class TriggerEndpointsTest : WebApiTest
             .MustHaveHappened(1, Times.Exactly);
 
         Fake.ClearRecordedCalls(FakeScheduler);
-        A.CallTo(() => FakeScheduler.RescheduleJob(triggerKeyTwo, A<ITrigger>._, A<CancellationToken>._)).Returns((DateTimeOffset?) null);
+        A.CallTo(() => FakeScheduler.RescheduleJob(triggerKeyTwo, A<ITrigger>._, A<CancellationToken>._)).Returns(null);
 
         response = await HttpScheduler.RescheduleJob(triggerKeyTwo, TestData.SimpleTrigger);
         response.Should().BeNull();

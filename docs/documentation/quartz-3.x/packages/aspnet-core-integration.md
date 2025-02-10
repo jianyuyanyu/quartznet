@@ -66,8 +66,8 @@ public class SendEmailJob : IJob
     {
         // Code that sends a periodic email to the user (for example)
         // Note: This method must always return a value 
-        // This is especially important for trigger listers watching job execution 
-        return Task.FromResult(true);
+        // This is especially important for trigger listeners watching job execution 
+        return Task.CompletedTask;
     }
 }        
 ```
@@ -79,7 +79,6 @@ After that, you just need to build Quartz trigger in `Program.cs`, which guarant
 ```csharp
 builder.Services.AddQuartz(q =>
 {
-    q.UseMicrosoftDependencyInjectionScopedJobFactory();
     // Just use the name of your job that you created in the Jobs folder.
     var jobKey = new JobKey("SendEmailJob");
     q.AddJob<SendEmailJob>(opts => opts.WithIdentity(jobKey));

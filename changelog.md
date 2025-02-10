@@ -6,7 +6,7 @@
 
 ### BREAKING CHANGES
 
-  * A lot of types were sealed and/or intenralized, these can be opened later on if needed. We are just trying to minimize API surface that needs to be maintained
+  * A lot of types were sealed and/or internalized, these can be opened later on if needed. We are just trying to minimize API surface that needs to be maintained
   * netstandard2.0 build no longer reference System.Configuration.ConfigurationManager and thus there's no support for Full Framework style .config files
   * **JobKey** and **TriggerKey** now throw an **ArgumentNullException** when you specify **null** for _name_ or _group_ (#1359)
   * The following properties have been removed from **AbstractTrigger** as they represent information that is already available through the **Key** and **JobKey** properties:
@@ -25,6 +25,8 @@
   * For **MaxBatchSize**, a value less than or equal to **zero** will be rejected.
   * The ctor for **QuartzScheduler** no longer takes an **idleWaitTime** argument. This value
     is now obtained from a newly introduced **IdleWaitTime** property on **QuartzSchedulerResources**.
+
+  * `SystemTime` was removed as way to provide "now", you can inject `TimeProvider` via configuration or `SchedulerBuilder.UseTimeProvider<T>()`
 
   * The `Equals(StringOperator? other)` method of **StringOperator** is now also virtual to allow it to be
     overridden in pair with `Equals(object? obj)` and `GetHashCode()`.
@@ -69,10 +71,11 @@
   * `Task` return types and parameters have been changed to `ValueTask`.  Any consumers of Quartz expecting a `Task` will require to update the signatures to `ValueTask`,
      or use the `AsTask()` Method on ValueTask to Return the `ValueTask` as a `Task`  (#988)
 
-  * To configure JSON serialization to be used in job store instead of old `UseJsonSerializer` you should now use `UseNewtonsoftJsonSerializer`
-    and replace old package reference `Quartz.Serialization.Json` with `Quartz.Serialization.Newtonsoft`
+  * To configure JSON serialization to be used in job store instead of old `UseJsonSerializer` you should now use either `UseSystemTextJsonSerializer` or `UseNewtonsoftJsonSerializer`
+    and remove the old package reference `Quartz.Serialization.Json` (and if Newtonsoft used, reference `Quartz.Serialization.Newtonsoft`). Change was made to distinguish the two common
+    serializers that are being used (System.Text.Json and JSON.NET).
 
-  * `Quartz.Extensions.DependencyInjection` and `Quartz.Extensions.Hosting` were merged to be part of main Quartz package, you can now remove those package references
+  * `Quartz.Extensions.DependencyInjection`, `Quartz.Extensions.Hosting` and `Quartz.Serialization.SystemTextJson`  were merged to be part of main Quartz package, you can now remove those package references
 
   * `JobStoreSupport`'s `GetNonManagedTXConnection` and `GetConnection` return signatures changed from `ConnectionAndTransactionHolder` to `ValueTask<ConnectionAndTransactionHolder>`
 
@@ -91,6 +94,29 @@
     `IDeserializationCallback` interface was removed from class `CronExpression` and the deserialization logic
     added to the constructor `CronExpression(SerializationInfo info, StreamingContext context)`.
 
+
+## Release 3.8.1, Feb xx 2024
+
+* Fix handling of env var quartz.config (#2212) (#2213)
+* Use configured type loader in scheduler factory init (#2268)
+
+
+## Release 3.8.0, Nov 18 2023
+
+* CHANGES
+    * `TryGetString` method added to JobDataMap (#2125)
+    * Add NET 8.0 targeting for examples, tests and integration projects (#2192)
+    * Upgrade TimeZoneConverter to version 6.1.0 (#2194)
+    * Improve trimming compatibility (#2195, #2131, #2197)
+
+* FIXES
+    * JobDataMap `TryGetXXX` methods will now correctly return true/false if a key value can be retrieved (or not) (#2125)
+    * JobDataMap `GetXXX` methods throw KeyNotFoundException if the key does not exist on the JobDataMap (#2125)
+    * JobDataMap `GetXXX` methods throw InvalidCastException if null value for non nullable types is found. (#2125)
+    * DailyCalendar should use same time zone offset for all checks (#2113)
+    * SendMailJob will now throw JobExecutionException on BuildMessage construction failure due to missing mandatory params. (#2126)
+    * JobInterruptMonitorPlugin should tolerate missing JobDataMapKeyAutoInterruptable (#2191)
+    * XMLSchedulingDataProcessorPlugin not using custom TypeLoader #2131
 
 ## Release 3.7.0, xxx xx 2023
 

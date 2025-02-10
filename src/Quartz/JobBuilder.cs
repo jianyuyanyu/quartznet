@@ -19,6 +19,8 @@
 
 #endregion
 
+using System.Diagnostics.CodeAnalysis;
+
 using Quartz.Impl;
 
 namespace Quartz;
@@ -96,7 +98,7 @@ public sealed class JobBuilder : IJobConfigurator
     /// and set the class name of the job to be executed.
     /// </summary>
     /// <returns>a new JobBuilder</returns>
-    public static JobBuilder Create(Type jobType)
+    public static JobBuilder Create([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type jobType)
     {
         JobBuilder b = new JobBuilder();
         b.OfType(jobType);
@@ -108,10 +110,10 @@ public sealed class JobBuilder : IJobConfigurator
     /// and set the class name of the job to be executed.
     /// </summary>
     /// <returns>a new JobBuilder</returns>
-    public static JobBuilder Create<T>() where T : IJob
+    public static JobBuilder Create<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>() where T : IJob
     {
         JobBuilder b = new JobBuilder();
-        b.OfType(typeof(T));
+        b.OfType<T>();
         return b;
     }
 
@@ -133,7 +135,7 @@ public sealed class JobBuilder : IJobConfigurator
         // ConcurrentExecutionDisallowed and PersistJobDataAfterExecution if
         // no explicit values were specified
         var resolvedJobType = Type.GetType(_jobType.FullName);
-        if (resolvedJobType != null)
+        if (resolvedJobType is not null)
         {
             if (!_concurrentExecutionDisallowed.HasValue)
             {
@@ -276,7 +278,7 @@ public sealed class JobBuilder : IJobConfigurator
     /// </summary>
     /// <returns>the updated JobBuilder</returns>
     /// <seealso cref="IJobDetail.JobType" />
-    public JobBuilder OfType<T>()
+    public JobBuilder OfType<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] T>()
     {
         return OfType(typeof(T));
     }
@@ -287,7 +289,7 @@ public sealed class JobBuilder : IJobConfigurator
     /// </summary>
     /// <returns>the updated JobBuilder</returns>
     /// <seealso cref="IJobDetail.JobType" />
-    public JobBuilder OfType(Type type)
+    public JobBuilder OfType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] Type type)
     {
         _jobType = new JobType(type);
         return this;

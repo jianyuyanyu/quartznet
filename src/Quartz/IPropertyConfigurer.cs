@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Quartz;
 
@@ -23,4 +24,11 @@ public interface IPropertySetter
 /// </summary>
 public interface IPropertyConfigurationRoot : IPropertySetter
 {
+}
+
+internal interface IContainerConfigurationSupport : IPropertyConfigurer, IPropertyConfigurationRoot
+{
+    void RegisterSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicMethods)] TImplementation>()
+        where TService : class
+        where TImplementation : class, TService;
 }
